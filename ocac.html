@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Multi-Converter & Compass</title>
+    <style>
+        /* --- DESIGN CONFIGURATIONS --- */
+        :root[data-theme="light"][data-style="core"] {
+            --bg-gradient: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-color: #0284c7;
+            --accent-glow: 0 0 10px rgba(2, 132, 199, 0.2);
+            --result-bg: rgba(241, 245, 249, 0.9);
+            --box-shadow: 0 20px 40px rgba(15, 23, 42, 0.05);
+        }
+
+        :root[data-theme="dark"][data-style="core"] {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-color: #38bdf8;
+            --accent-glow: 0 0 15px rgba(56, 189, 248, 0.6);
+            --result-bg: rgba(15, 23, 42, 0.6);
+            --box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        :root[data-theme="light"][data-style="cyber"] {
+            --bg-gradient: linear-gradient(135deg, #fff5f5 0%, #fff0f6 100%);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --card-border: #d90429;
+            --text-main: #2b2d42;
+            --text-muted: #8d99ae;
+            --accent-color: #ef233c;
+            --accent-glow: 0 0 12px rgba(239, 35, 60, 0.4);
+            --result-bg: #edf2f4;
+            --box-shadow: 0 10px 25px rgba(217, 4, 41, 0.15);
+        }
+
+        :root[data-theme="dark"][data-style="cyber"] {
+            --bg-gradient: linear-gradient(135deg, #000000 0%, #11001c 100%);
+            --card-bg: rgba(10, 0, 20, 0.8);
+            --card-border: #ff007f;
+            --text-main: #00ffff;
+            --text-muted: #bd00ff;
+            --accent-color: #ff007f;
+            --accent-glow: 0 0 20px #ff007f, 0 0 40px #bd00ff;
+            --result-bg: rgba(0, 0, 0, 0.9);
+            --box-shadow: 0 0 30px rgba(255, 0, 127, 0.3);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            transition: all 0.5s ease;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .converter-box {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 40px 30px;
+            border-radius: 24px;
+            border: 2px solid var(--card-border);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+            max-width: 440px;
+            width: 100%;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        h2 {
+            margin-top: 15px;
+            margin-bottom: 25px;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            text-shadow: var(--accent-glow);
+            color: var(--text-main);
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin-left: 2%;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border: 2px solid var(--card-border);
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            box-sizing: border-box;
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        :root[data-theme="dark"] select, :root[data-theme="dark"] input {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-color);
+            box-shadow: var(--accent-glow);
+        }
+
+        .dual-input-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-col {
+            flex: 1;
+        }
+
+        .unit-selection-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .unit-col {
+            flex: 1;
+        }
+
+        .unit-col select {
+            margin-bottom: 0;
+        }
+
+        .swap-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border: 2px solid var(--card-border);
+            color: var(--text-main);
+            border-radius: 10px;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s ease;
+            padding: 0;
+            gap: 4px;
+        }
+
+        .swap-btn svg {
+            width: 20px;
+            height: 12px;
+            display: block;
+            fill: currentColor;
+            transition: fill 0.3s ease;
+        }
+
+        .swap-btn:hover {
+            border-color: var(--accent-color);
+            box-shadow: var(--accent-glow);
+            transform: scale(1.05);
+        }
+
+        .result-container {
+            margin-top: 10px;
+            padding: 20px;
+            background-color: var(--result-bg);
+            border-radius: 14px;
+            border: 1px solid var(--card-border);
+            transition: all 0.5s ease;
+            margin-bottom: 20px;
+        }
+
+        .result {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--accent-color);
+            text-shadow: var(--accent-glow);
+            word-break: break-all;
+        }
+
+        /* --- CONTROL SYSTEM INTERFACE --- */
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+        }
+
+        .toggle-btn {
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--card-border);
+            font-size: 11px;
+            padding: 6px 12px;
+            border-radius: 30px;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .toggle-btn:hover {
+            background: var(--accent-color);
+            color: #fff;
+        }
+
+        /* --- COLLAPSIBLE DRAWER COMPASS --- */
+        .compass-section {
+            margin-top: 20px;
+            border-top: 2px dashed var(--card-border);
+            padding-top: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .compass-drawer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .compass-drawer.open {
+            max-height: 290px;
+        }
+
+        .compass-housing {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            border: 3px solid var(--accent-color);
+            border-radius: 50%;
+            box-shadow: var(--accent-glow);
+            background: rgba(0, 0, 0, 0.15);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        .compass-dial {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            will-change: transform;
+        }
+
+        .compass-needle {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 22px solid #ef233c;
+            top: 12px;
+            z-index: 5;
+        }
+
+        .cardinal {
+            position: absolute;
+            font-weight: 900;
+            font-size: 13px;
+            color: var(--text-muted);
+            width: 20px;
+            text-align: center;
+        }
+
+        .cardinal-n { top: 6px; left: calc(50% - 10px); color: #ef233c; }
+        .cardinal-e { right: 6px; top: calc(50% - 10px); }
+        .cardinal-s { bottom: 6px; left: calc(50% - 10px); }
+        .cardinal-w { left: 6px; top: calc(50% - 10px); }
+
+        .heading-text {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--accent-color);
+            margin-bottom: 12px;
+        }
+
+        .panel-toggle-btn {
+            cursor: pointer;
+            background: transparent;
+            border: 2px solid var(--accent-color);
+            font-size: 11px;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: var(--text-main);
+            outline: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .panel-toggle-btn:hover {
+            background: var(--accent-color);
+            color: #fff;
+            box-shadow: var(--accent-glow);
+        }
+
+        .tracking-action-btn {
+            cursor: pointer;
+            background: var(--accent-color);
+            border: none;
+            font-size: 10px;
+            padding: 8px 22px;
+            border-radius: 20px;
+            color: #fff;
+            outline: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: var(--accent-glow);
+            transition: all 0.2s ease;
+        }
+
+        .tracking-action-btn.running {
+            background: #ef233c;
+            box-shadow: 0 0 15px rgba(239, 35, 60, 0.4);
+        }
+    </style>
+</head>
+<body id="appBody">
+
+<div class="converter-box">
+    <div class="controls-header">
+        <button class="toggle-btn" id="themeButton" onclick="toggleTheme()">Dark Mode</button>
+        <button class="toggle-btn" id="styleButton" onclick="toggleStyle()">Cyber Mode</button>
+    </div>
+    
+    <h2>OMEGA SYSTEM</h2>
+    
+    <label for="category">Select Dimension</label>
+    <select id="category" onchange="updateUnits()">
+        <option value="temperature">Temperature</option>
+        <option value="mass">Mass</option>
+        <option value="volume">Volume</option>
+        <option value="area">Area</option>
+        <option value="length">Length</option>
+        <option value="data">Data</option>
+        <option value="speed">Speed</option>
+        <option value="time">Time</option>
+        <option value="money">Money (USD Base)</option>
+    </select>
+
+    <div class="dual-input-row">
+        <div class="input-col">
+            <label for="tempInput">Source Value</label>
+            <input type="number" id="tempInput" placeholder="1.00" value="1" oninput="calculate()">
+        </div>
+        <div class="input-col" id="secondaryInputContainer">
+            <label for="scaleInput">Target Scale Unit</label>
+            <input type="number" id="scaleInput" placeholder="1.00" value="1" oninput="calculate()">
+        </div>
+    </div>
+
+    <div class="unit-selection-row">
+        <div class="unit-col">
+            <label for="fromUnit">From</label>
+            <select id="fromUnit" onchange="calculate()"></select>
+        </div>
+        
+        <button class="swap-btn" onclick="swapUnits()">
+            <svg viewBox="0 0 24 12"><path d="M0 5h16.586l-3.293-3.293 1.414-1.414 5.707 5.707-5.707 5.707-1.414-1.414 3.293-3.293H0z"/></svg>
+            <svg viewBox="0 0 24 12"><path d="M24 7H7.414l3.293 3.293-1.414 1.414-5.707-5.707 5.707-5.707 1.414 1.414-3.293 3.293H24z"/></svg>
+        </button>
+        
+        <div class="unit-col">
+            <label for="toUnit">To</label>
+            <select id="toUnit" onchange="calculate()"></select>
+        </div>
+    </div>
+    
+    <div class="result-container">
+        <label style="text-align: center; margin: 0 0 5px 0;">Computed Vector</label>
+        <div class="result" id="result">--</div>
+    </div>
+
+    <div class="compass-section">
+        <button class="panel-toggle-btn" id="panelVisibilityBtn" onclick="toggleCompassPanel()">Open Compass Panel</button>
+        
+        <div class="compass-drawer" id="compassDrawer">
+            <div class="compass-housing">
+                <div class="compass-needle"></div>
+                <div class="compass-dial" id="compassDial">
+                    <div class="cardinal cardinal-n">N</div>
+                    <div class="cardinal cardinal-e">E</div>
+                    <div class="cardinal cardinal-s">S</div>
+                    <div class="cardinal cardinal-w">W</div>
+                </div>
+            </div>
+            <div class="heading-text" id="headingDisplay">--</div>
+            
+            <button class="tracking-action-btn" id="sensorToggleBtn" onclick="toggleSensorTracking()">Start Compass</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentTheme = "dark";
+let currentStyle = "core";
+
+let filterX = 1;
+let filterY = 0;
+const filterCoefficient = 0.12; 
+
+let panelOpen = false;
+let trackingActive = false;
+
+const unitData = {
+    temperature: {
+        units: ["Celsius (°C)", "Fahrenheit (°F)", "Kelvin (K)"],
+        convert: (val, from, to) => {
+            let c;
+            if (from === "Celsius (°C)") c = val;
+            else if (from === "Fahrenheit (°F)") c = (val - 32) / 1.8;
+            else if (from === "Kelvin (K)") c = val - 273.15;
+            if (to === "Celsius (°C)") return c;
+            if (to === "Fahrenheit (°F)") return (c * 1.8) + 32;
+            if (to === "Kelvin (K)") return c + 273.15;
+        }
+    },
+    mass: { 
+        units: ["Kilogram (kg)", "Gram (g)", "Pound (lb)", "Ounce (oz)"], 
+        ratios: { "Kilogram (kg)": 1, "Gram (g)": 0.001, "Pound (lb)": 0.45359237, "Ounce (oz)": 0.0283495231 } 
+    },
+    volume: { 
+        units: ["Liter (L)", "Milliliter (mL)", "Gallon (gal)", "Cup (cup)"], 
+        ratios: { "Liter (L)": 1, "Milliliter (mL)": 0.001, "Gallon (gal)": 3.78541, "Cup (cup)": 0.236588 } 
+    },
+    area: { 
+        units: ["Square Meter (m²)", "Square Kilometer (km²)", "Square Mile (mi²)", "Acre"], 
+        ratios: { "Square Meter (m²)": 1, "Square Kilometer (km²)": 1000000, "Square Mile (mi²)": 2589988.11, "Acre": 4046.86 } 
+    },
+    length: { 
+        units: ["Meter (m)", "Kilometer (km)", "Mile (mi)", "Foot (ft)", "Inch (in)"], 
+        ratios: { "Meter (m)": 1, "Kilometer (km)": 1000, "Mile (mi)": 1609.34, "Foot (ft)": 0.3048, "Inch (in)": 0.0254 } 
+    },
+    data: { 
+        units: ["Bytes (B)", "Kilobytes (KB)", "Megabytes (MB)", "Gigabytes (GB)", "Terabytes (TB)", "Petabytes (PB)", "Exabytes (EB)", "Zettabytes (ZB)", "Yottabytes (YB)"], 
+        ratios: { 
+            "Bytes (B)": 1, 
+            "Kilobytes (KB)": 1024, 
+            "Megabytes (MB)": 1024**2, 
+            "Gigabytes (GB)": 1024**3, 
+            "Terabytes (TB)": 1024**4,
+            "Petabytes (PB)": 1024**5,
+            "Exabytes (EB)": 1024**6,
+            "Zettabytes (ZB)": 1024**7,
+            "Yottabytes (YB)": 1024**8
+        } 
+    },
+    speed: { 
+        units: ["Meters/Second (m/s)", "Kilometers/Hour (km/h)", "Miles/Hour (mph)", "Knots"], 
+        ratios: { "Meters/Second (m/s)": 1, "Kilometers/Hour (km/h)": 1/3.6, "Miles/Hour (mph)": 0.44704, "Knots": 0.514444 } 
+    },
+    time: { 
+        units: ["Nanoseconds (ns)", "Microseconds (μs)", "Milliseconds (ms)", "Seconds (s)", "Minutes (min)", "Hours (h)", "Days"], 
+        ratios: { "Nanoseconds (ns)": 1e-9, "Microseconds (μs)": 1e-6, "Milliseconds (ms)": 0.001, "Seconds (s)": 1, "Minutes (min)": 60, "Hours (h)": 3600, "Days": 86400 } 
+    },
+    money: { 
+        units: ["US Dollar (USD)", "Mexican Peso (MXN)", "Euro (EUR)", "British Pound (GBP)", "Japanese Yen (JPY)", "Canadian Dollar (CAD)"], 
+        ratios: { "US Dollar (USD)": 1, "Mexican Peso (MXN)": 17.50, "Euro (EUR)": 0.92, "British Pound (GBP)": 0.79, "Japanese Yen (JPY)": 155.5, "Canadian Dollar (CAD)": 1.36 } 
+    }
+};
+
+function updateUnits() {
+    const cat = document.getElementById("category").value;
+    const fromSel = document.getElementById("fromUnit");
+    const toSel = document.getElementById("toUnit");
+    const secInputContainer = document.getElementById("secondaryInputContainer");
+    
+    // Hide or display the custom scale selector depending on selected dimension
+    if (cat === "temperature") {
+        secInputContainer.style.display = "none";
+    } else {
+        secInputContainer.style.display = "block";
+    }
+    
+    fromSel.innerHTML = ""; toSel.innerHTML = "";
+    unitData[cat].units.forEach((unit) => {
+        fromSel.add(new Option(unit, unit));
+        toSel.add(new Option(unit, unit));
+    });
+    if(toSel.options.length > 1) toSel.selectedIndex = 1;
+    calculate();
+}
+
+function swapUnits() {
+    const fromSel = document.getElementById("fromUnit");
+    const toSel = document.getElementById("toUnit");
+    const tempIndex = fromSel.selectedIndex;
+    fromSel.selectedIndex = toSel.selectedIndex;
+    toSel.selectedIndex = tempIndex;
+    calculate();
+}
+
+function calculate() {
+    const cat = document.getElementById("category").value;
+    const inputVal = document.getElementById("tempInput").value;
+    let scaleVal = document.getElementById("scaleInput").value;
+    const fromUnit = document.getElementById("fromUnit").value;
+    const toUnit = document.getElementById("toUnit").value;
+    const resultDiv = document.getElementById("result");
+    
+    if (inputVal === "") { resultDiv.innerHTML = "--"; return; }
+    
+    const value = parseFloat(inputVal);
+    // Default secondary metric multiplier rule to 1 if it gets cleared out
+    let scaleMultiplier = (scaleVal === "" || parseFloat(scaleVal) <= 0) ? 1 : parseFloat(scaleVal);
+    
+    let out = 0;
+    if (cat === "temperature") {
+        out = unitData.temperature.convert(value, fromUnit, toUnit);
+    } else {
+        const valueInBase = value * unitData[cat].ratios[fromUnit];
+        // Scale division calculations map original data base relative to your custom scale size parameter [x]
+        out = valueInBase / (unitData[cat].ratios[toUnit] * scaleMultiplier);
+    }
+    
+    resultDiv.innerHTML = Number(out.toPrecision(7)).toString() + " x [" + scaleMultiplier + " " + toUnit.split(" ").pop() + "]";
+}
+
+function applyInterfaceAttributes() {
+    document.documentElement.setAttribute("data-theme", currentTheme);
+    document.documentElement.setAttribute("data-style", currentStyle);
+    document.getElementById("themeButton").innerHTML = currentTheme === "light" ? "Dark Mode" : "Light Mode";
+    document.getElementById("styleButton").innerHTML = currentStyle === "core" ? "Cyber Mode" : "Core Mode";
+}
+
+function toggleTheme() { currentTheme = currentTheme === "light" ? "dark" : "light"; applyInterfaceAttributes(); }
+function toggleStyle() { currentStyle = currentStyle === "core" ? "cyber" : "core"; applyInterfaceAttributes(); }
+
+function toggleCompassPanel() {
+    const drawer = document.getElementById("compassDrawer");
+    const btn = document.getElementById("panelVisibilityBtn");
+    
+    panelOpen = !panelOpen;
+    if (panelOpen) {
+        drawer.classList.add("open");
+        btn.innerText = "Close Compass Panel";
+    } else {
+        if (trackingActive) toggleSensorTracking();
+        drawer.classList.remove("open");
+        btn.innerText = "Open Compass Panel";
+    }
+}
+
+function toggleSensorTracking() {
+    const btn = document.getElementById("sensorToggleBtn");
+    trackingActive = !trackingActive;
+    
+    if (trackingActive) {
+        btn.innerText = "End Compass";
+        btn.classList.add("running");
+        bindSensors(true);
+    } else {
+        btn.innerText = "Start Compass";
+        btn.classList.remove("running");
+        document.getElementById('headingDisplay').innerText = "--";
+        bindSensors(false);
+    }
+}
+
+function bindSensors(enable) {
+    if (!enable) {
+        window.removeEventListener('deviceorientationabsolute', handleMove, true);
+        window.removeEventListener('deviceorientation', handleMove, true);
+        return;
+    }
+
+    if (window.DeviceOrientationEvent) {
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+                .then(state => {
+                    if (state === 'granted') {
+                        window.addEventListener('deviceorientation', handleMove, true);
+                    }
+                }).catch(console.error);
+        } else {
+            window.addEventListener('deviceorientationabsolute', handleMove, true);
+            window.addEventListener('deviceorientation', handleMove, true);
+        }
+    } else {
+        alert("Device orientation tracker modules not found on current display hardware.");
+    }
+}
+
+function handleMove(e) {
+    if (!trackingActive) return;
+
+    if (e.beta && Math.abs(e.beta) > 65) {
+        return; 
+    }
+
+    let heading = e.webkitCompassHeading || Math.abs(e.alpha - 360);
+    if (heading !== undefined && heading !== null) {
+        let rad = heading * (Math.PI / 180);
+        
+        filterX = filterX + filterCoefficient * (Math.cos(rad) - filterX);
+        filterY = filterY + filterCoefficient * (Math.sin(rad) - filterY);
+        
+        let smoothAngleRad = Math.atan2(filterY, filterX);
+        let smoothHeading = smoothAngleRad * (180 / Math.PI);
+        if (smoothHeading < 0) smoothHeading += 360;
+        
+        document.getElementById('compassDial').style.transform = `rotate(${-smoothHeading}deg)`;
+        
+        let displayDegrees = Math.round(smoothHeading) % 360;
+        let look = "N";
+        if (displayDegrees >= 45 && displayDegrees < 135) look = "E";
+        else if (displayDegrees >= 135 && displayDegrees < 225) look = "S";
+        else if (displayDegrees >= 225 && displayDegrees < 315) look = "W";
+        
+        document.getElementById('headingDisplay').innerText = `${displayDegrees}° ${look}`;
+    }
+}
+
+applyInterfaceAttributes();
+updateUnits();
+</script>
+
+</body>
+</html>
